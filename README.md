@@ -1,18 +1,40 @@
-# Pipeline Local de Vídeo para Documentação Técnica
+# Pipeline local de vídeo para documentação técnica
 
-Este projeto implementa um pipeline 100% local em Python para transformar um vídeo em uma especificação técnica em Markdown. A arquitetura foi organizada em quatro etapas:
+Este projeto transforma um vídeo em uma especificação técnica em Markdown, usando somente infraestrutura local. Ele combina transcrição de áudio, análise visual de cenas, descrição de telas e geração de documentação técnica em linguagem natural.
 
-1. Extrair áudio e transcrever com `faster-whisper`.
-2. Detectar cenas e salvar frames relevantes em disco.
-3. Descrever as imagens com `moondream` via Ollama.
-4. Gerar um documento Markdown final usando `llama3.1` ou `qwen2.5:7b`.
+## Visão geral
 
-## Requisitos
+O fluxo trabalha em quatro etapas sequenciais:
 
-- Python 3.10+
-- ffmpeg instalado e disponível no `PATH`
-- CUDA opcional para acelerar `faster-whisper` e `llama` no Ollama
-- Ollama instalado e rodando localmente
+1. Extração de áudio e transcrição com `faster-whisper`
+2. Detecção de cenas e exportação dos frames mais relevantes
+3. Descrição visual das telas com `moondream` via Ollama
+4. Geração do documento final em Markdown com `llama3.1` (ou `qwen2.5:7b`)
+
+A arquitetura foi pensada para GPUs de baixa memória, como a RTX 3050 com 4 GB de VRAM, evitando o carregamento simultâneo de vários modelos de IA na placa de vídeo.
+
+## Pré-requisitos
+
+### Ferramentas externas
+
+- Python 3.10+: https://www.python.org/downloads/
+- FFmpeg: https://www.ffmpeg.org/download.html
+- Ollama: https://ollama.com/
+- Modelos Ollama:
+  - https://ollama.com/library/moondream
+  - https://ollama.com/library/llama3.1
+  - https://ollama.com/library/qwen2.5
+- `faster-whisper`: https://github.com/SYSTRAN/faster-whisper
+- OpenCV: https://opencv.org/
+- PySceneDetect: https://scenedetect.com/
+- yt-dlp: https://github.com/yt-dlp/yt-dlp
+- gdown: https://github.com/wkentaro/gdown
+
+### Hardware recomendado
+
+- CPU: Intel Core i7 ou equivalente
+- RAM: 16 GB mínimo, 32 GB recomendado
+- GPU: NVIDIA RTX 3050 4 GB ou superior, com atenção ao uso sequencial dos modelos
 
 ## Instalação
 
@@ -24,21 +46,50 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-> Se você usa Linux/macOS, o comando do ambiente virtual será `source .venv/bin/activate`.
+No Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+## Verificação de modelos do Ollama
+
+Antes de executar o pipeline, confirme que os modelos necessários já foram baixados:
+
+```bash
+ollama pull moondream
+ollama pull llama3.1
+```
+
+Se preferir usar `qwen2.5:7b`, basta ajustar o parâmetro `model_name` na etapa final.
 
 ## Uso
+
+### Vídeo local
 
 ```bash
 python main.py "C:\caminho\para\video.mp4"
 ```
 
-Ou com saída customizada:
+### URL do YouTube
+
+```bash
+python main.py "https://www.youtube.com/watch?v=EXEMPLO"
+```
+
+### URL do Google Drive
+
+```bash
+python main.py "https://drive.google.com/file/d/ID_DO_ARQUIVO/view?usp=sharing"
+```
+
+### Saída personalizada
 
 ```bash
 python main.py "C:\caminho\para\video.mp4" --output "C:\caminho\para\documento.md"
 ```
 
-## Estrutura do Projeto
+## Estrutura do projeto
 
 ```text
 local-video-doc-pipeline/
@@ -59,24 +110,25 @@ local-video-doc-pipeline/
 │       └── pipeline.py
 ├── audio/
 ├── temp_frames/
+├── temp_downloads/
 ├── output/
-└── documento_especificacao.md
+├── documento_especificacao.md
+└── tests/
+    └── test_smoke.py
 ```
 
-## Observações Importantes
+## Observações técnicas importantes
 
-- A memória de vídeo da RTX 3050 tem 4 GB, então o pipeline é sequencial.
-- Entre cada etapa, o projeto chama a função `limpar_memoria()`, que executa `gc.collect()` e `torch.cuda.empty_cache()` quando necessário.
-- A detecção de cenas roda principalemte em CPU, para reduzir overhead de GPU.
-- O Ollama é usado em etapas separadas para não carregar vários modelos de IA na VRAM ao mesmo tempo.
+- A memória de vídeo da RTX 3050 tem 4 GB, então o pipeline é estritamente sequencial.
+- Entre as etapas, o projeto chama `limpar_memoria()`, que executa `gc.collect()` e `torch.cuda.empty_cache()` quando o CUDA estiver disponível.
+- A etapa de detecção de cenas roda em CPU para reduzir overhead de GPU.
+- O Ollama é usado em etapas separadas para evitar que múltiplos modelos fiquem carregados ao mesmo tempo na VRAM.
+- Vídeos remotos do YouTube e do Google Drive são baixados para um diretório temporário antes do processamento.
 
-## Modelos esperados localmente
+## Roadmap sugerido
 
-Antes de executar o pipeline, certifique-se de que o Ollama possui os modelos necessários:
-
-```bash
-ollama pull moondream
-ollama pull llama3.1
-```
-
-Se preferir usar `qwen2.5:7b`, ajuste a variável `model_name` na etapa final.
+- Suporte a streaming de vídeo com resolução adaptativa
+- Melhor seleção automática de cenas relevantes
+- Extração de regras de negócio em formato JSON + Markdown
+- Exportação de relatório executivo em HTML
+- Versionamento e publicação de releases no GitHub
