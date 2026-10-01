@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/local_video_doc_pipeline/__init__.py
+src/local_video_doc_pipeline/__main__.py
+src/local_video_doc_pipeline/config.py
+src/local_video_doc_pipeline/describe_frames.py
+src/local_video_doc_pipeline/detect_scenes.py
+src/local_video_doc_pipeline/generate_markdown.py
+src/local_video_doc_pipeline/pipeline.py
+src/local_video_doc_pipeline/transcribe_audio.py
+src/local_video_doc_pipeline/utils.py
+src/local_video_doc_pipeline.egg-info/PKG-INFO
+src/local_video_doc_pipeline.egg-info/SOURCES.txt
+src/local_video_doc_pipeline.egg-info/dependency_links.txt
+src/local_video_doc_pipeline.egg-info/requires.txt
+src/local_video_doc_pipeline.egg-info/top_level.txt
+tests/test_smoke.py
